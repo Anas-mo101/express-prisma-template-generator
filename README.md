@@ -7,8 +7,8 @@ This CLI tool helps you quickly scaffold an Express.js server with Prisma integr
 1.  **Clone the repository:**
 
     ```bash
-    git clone <your_repository_url>
-    cd <your_repository_directory>
+    git clone https://github.com/Anas-mo101/express-prisma-template-generator.git
+    cd express-prisma-template-generator
     ```
 
 2.  **Install dependencies:**
