@@ -3,7 +3,7 @@ import prisma from "../../database";
 import AppError from "../../error/AppError";
 
 export type Store{{Model}} = {
-  
+  {{fields}}
 };
 
 const Store{{Model}}Service = async (data: Store{{Model}}): Promise<{{Model}}> => {

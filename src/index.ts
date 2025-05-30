@@ -26,135 +26,122 @@ function pluralize(str: string) {
 }
 
 /**
- * Generates content for a delete service file.
- * Replaces 'ModuleName' and 'moduleName' placeholders in the template content.
- * @param templateContent The raw content of the template file.
- * @param moduleName The name of the module (e.g., 'User').
- * @returns The rendered service file content.
- */
-function generateDeleteServiceTemplate(templateContent: string, moduleName: string): string {
-    const pascalCaseModuleName = toPascalCase(moduleName);
-    const lowerCaseModuleName = moduleName.toLowerCase();
-    const upperCaseModuleName = moduleName.toUpperCase();
-    return templateContent
-        .replace(/{{MODEL}}/g, upperCaseModuleName)
-        .replace(/{{Model}}/g, pascalCaseModuleName)
-        .replace(/{{model}}/g, lowerCaseModuleName);
-}
-
-/**
- * Generates content for a list service file.
- * Replaces '{{Model}}', '{{model}}', and '{{models}}' placeholders in the template content.
- * @param templateContent The raw content of the template file.
- * @param modelName The name of the model (e.g., 'User').
- * @returns The rendered service file content.
- */
-function generateListServiceTemplate(templateContent: string, modelName: string): string {
-    const Model = capitalize(modelName); // PascalCase (e.g., User)
-    const model = modelName.toLowerCase(); // lowercase (e.g., user)
-    // For plural, a simple 's' is often sufficient for common cases,
-    // but a more robust pluralization library would be needed for irregular plurals.
-    const models = model + 's'; // lowercase plural (e.g., users)
-
-    return templateContent
-        .replace(/{{Model}}/g, Model)
-        .replace(/{{model}}/g, model)
-        .replace(/{{models}}/g, models);
-}
-
-/**
- * Generates content for a show service file.
- * Replaces 'ModuleName' and 'moduleName' placeholders in the template content.
- * @param templateContent The raw content of the template file.
- * @param moduleName The name of the module (e.g., 'User').
- * @returns The rendered service file content.
- */
-function generateShowServiceTemplate(templateContent: string, moduleName: string): string {
-    const Model = capitalize(moduleName);
-    const model = moduleName.toLowerCase();
-    const MODEL = model.toUpperCase(); // This was in your example, but not used in the template provided.
-
-    return templateContent
-        .replace(/{{Model}}/g, Model)
-        .replace(/{{model}}/g, model)
-        .replace(/{{MODEL}}/g, MODEL);
-}
-
-/**
- * Generates content for a store (create) service file.
- * Replaces 'ModuleName' and 'moduleName' placeholders in the template content.
- * @param templateContent The raw content of the template file.
- * @param moduleName The name of the module (e.g., 'User').
- * @returns The rendered service file content.
- */
-function generateStoreServiceTemplate(templateContent: string, moduleName: string): string {
-    const Model = capitalize(moduleName);
-    const model = moduleName.toLowerCase();
-    const MODEL = model.toUpperCase(); // This was in your example, but not used in the template provided.
-
-    return templateContent
-        .replace(/{{Model}}/g, Model)
-        .replace(/{{model}}/g, model)
-        .replace(/{{MODEL}}/g, MODEL);
-}
-
-/**
- * Generates content for an update service file.
- * Replaces 'ModuleName' and 'moduleName' placeholders in the template content.
- * @param templateContent The raw content of the template file.
- * @param moduleName The name of the module (e.g., 'User').
- * @returns The rendered service file content.
- */
-function generateUpdateServiceTemplate(templateContent: string, moduleName: string): string {
-    const pascalCaseModuleName = toPascalCase(moduleName);
-    const lowerCaseModuleName = moduleName.toLowerCase();
-    const upperCaseModuleName = moduleName.toUpperCase();
-    return templateContent
-        .replace(/{{MODEL}}/g, upperCaseModuleName)
-        .replace(/{{Model}}/g, pascalCaseModuleName)
-        .replace(/{{model}}/g, lowerCaseModuleName);
-}
-
-
-/**
- * Generates content for a controller file.
- * Replaces '{{Model}}', '{{model}}', '{{ModelPlural}}', '{{modelPlural}}', and '{{ModuleServicesPath}}' placeholders.
- * @param templateContent The raw content of the template file.
- * @param moduleName The name of the module (e.g., 'User').
- * @returns The rendered controller file content.
- */
-function generateController(templateContent: string, moduleName: string): string {
-    const Model = capitalize(moduleName);
-    const model = moduleName.toLowerCase();
-    const ModelPlural = pluralize(Model);
-    const modelPlural = pluralize(model);
-    // Assuming ModuleServicesPath refers to the directory where services for this module reside
-    const ModuleServicesPath = `${Model}Services`;
-
-    return templateContent
-        .replace(/{{Model}}/g, Model)
-        .replace(/{{model}}/g, model)
-        .replace(/{{ModelPlural}}/g, ModelPlural)
-        .replace(/{{modelPlural}}/g, modelPlural)
-        .replace(/{{ModuleServicesPath}}/g, ModuleServicesPath);
-}
-
-/**
- * Generates content for a routes file.
- * Replaces '{{Model}}' and '{{model}}' placeholders.
+ * Generates content for a in templates
  * @param templateContent The raw content of the template file.
  * @param moduleName The name of the module (e.g., 'User').
  * @returns The rendered routes file content.
  */
-function generateRoutesTemplate(templateContent: string, moduleName: string): string {
-    const Model = capitalize(moduleName);
+function renderTemplate(templateContent: string, moduleName: string, fields?: Record<string, string>): string {
+    const Model = toPascalCase(moduleName);
     const model = moduleName.toLowerCase();
+    const MODEL = moduleName.toUpperCase();
+    const ModelPlural = pluralize(Model);
+    const modelPlural = pluralize(model);
+    const ModuleServicesPath = `${Model}Services`;
+    const models = model + 's';
 
-    return templateContent
+    let rendered = templateContent
+        .replace(/{{MODEL}}/g, MODEL)
         .replace(/{{Model}}/g, Model)
-        .replace(/{{model}}/g, model);
+        .replace(/{{model}}/g, model)
+        .replace(/{{ModelPlural}}/g, ModelPlural)
+        .replace(/{{modelPlural}}/g, modelPlural)
+        .replace(/{{ModuleServicesPath}}/g, ModuleServicesPath)
+        .replace(/{{models}}/g, models);
+
+    if (fields) {
+        let fieldsDeclaration = "";
+        for (const field in fields) {
+            const prismaType = fields[field];
+
+            const prismaToTsMap: Record<string, string> = {
+                Int: 'number',
+                String: 'string',
+                Boolean: 'boolean',
+                DateTime: 'Date',
+                Float: 'number',
+                Json: 'any', 
+            };
+
+            const isOptional = prismaType.includes("?");
+            const basePrismaType = prismaType.replace("?", "");
+
+            const tsType = prismaToTsMap[basePrismaType] || basePrismaType;
+
+            fieldsDeclaration += `\t${field}${isOptional ? "?" : ""}: ${tsType};\n`;
+        }
+        rendered = rendered.replace(/{{fields}}/g, fieldsDeclaration);
+    } else {
+        rendered = rendered.replace(/{{fields}}/g, "");
+    }
+
+    return rendered;
 }
 
+/**
+ * parses prisma schema into json to be rendered into templates 
+ * @param schemaPath path to prisma schema
+ */
+async function parsePrismaSchema(schemaPath: string): Promise<Record<string, Record<string, string>>> {
+    try {
+        const schemaContent = await fs.readFile(schemaPath, 'utf-8');
+        const models: Record<string, Record<string, string>> = {};
+        const modelRegex = /model\s+(\w+)\s+{\s*([\s\S]*?)\s*}/g;
+        const fieldRegex = /(\w+)\s+([\w?]+)\s+(@.+)?/g;
+        const enumRegex = /enum\s+(\w+)\s+{\s*([\s\S]*?)\s*}/g;
+        const relationRegex = /@relation\(/;
+        const enums: Record<string, string[]> = {};
+
+        // Parse enums first
+        let enumMatch;
+        while ((enumMatch = enumRegex.exec(schemaContent)) !== null) {
+            const enumName = enumMatch[1];
+            const enumValues = enumMatch[2].trim().split(/\s+/).filter(Boolean);
+            enums[enumName] = enumValues;
+        }
+
+        let modelMatch;
+        while ((modelMatch = modelRegex.exec(schemaContent)) !== null) {
+            const modelName = modelMatch[1];
+
+            const fieldsText = modelMatch[2].trim();
+            const allFields: Record<string, { type: string; attributes: string | undefined }> = {};
+            let fieldMatch;
+            while ((fieldMatch = fieldRegex.exec(fieldsText)) !== null) {
+                const fieldName = fieldMatch[1];
+                const fieldType = fieldMatch[2];
+                const attributes = fieldMatch[3];
+                allFields[fieldName] = { type: fieldType, attributes };
+                console.log(`  Found field: ${fieldName} of type ${fieldType} with attributes: ${attributes}`); // <---- LOG
+            }
+
+            const filteredFields: Record<string, string> = {};
+            for (const fieldName in allFields) {
+                if (!allFields[fieldName].attributes?.match(relationRegex)) {
+                    filteredFields[fieldName] = allFields[fieldName].type;
+                }
+            }
+            models[modelName] = filteredFields;
+        }
+
+        // Replace enum types in the model schema
+        for (const modelName in models) {
+            for (const fieldName in models[modelName]) {
+                let fieldType = models[modelName][fieldName];
+                const isOptional = fieldType.endsWith('?');
+                const baseType = isOptional ? fieldType.slice(0, -1) : fieldType;
+                if (enums[baseType]) {
+                    models[modelName][fieldName] = isOptional ? `${baseType}?` : baseType;
+                }
+            }
+        }
+
+        return models;
+    } catch (error) {
+        console.error("Error parsing Prisma schema:", error);
+        return {};
+    }
+}
 
 /**
  * Generates service, controller, and routes files for a given module.
@@ -166,7 +153,6 @@ function generateRoutesTemplate(templateContent: string, moduleName: string): st
  */
 async function generateModule(moduleName: string) {
     // Convert module name to PascalCase for directory and class names
-    const ModuleName = toPascalCase(moduleName);
 
     // Define the base directory where templates are located
     const templateDir = path.resolve(__dirname, 'templates');
@@ -192,16 +178,7 @@ async function generateModule(moduleName: string) {
                 return match ? match[1] : null;
             },
             // Function to get the appropriate renderer based on the verb
-            getRenderer: (verb: string) => {
-                switch (verb) {
-                    case "delete": return generateDeleteServiceTemplate;
-                    case "list": return generateListServiceTemplate;
-                    case "show": return generateShowServiceTemplate;
-                    case "store": return generateStoreServiceTemplate;
-                    case "update": return generateUpdateServiceTemplate;
-                    default: return null;
-                }
-            }
+            getRenderer: (verb: string) => renderTemplate
         },
         {
             category: 'controllers',
@@ -218,7 +195,7 @@ async function generateModule(moduleName: string) {
             },
             // Renderer for controllers
             getRenderer: (verb: string) => {
-                if (verb === 'controller') return generateController;
+                if (verb === 'controller') return renderTemplate;
                 return null;
             }
         },
@@ -237,11 +214,22 @@ async function generateModule(moduleName: string) {
             },
             // Renderer for routes
             getRenderer: (verb: string) => {
-                if (verb === 'route') return generateRoutesTemplate;
+                if (verb === 'route') return renderTemplate;
                 return null;
             }
         }
     ];
+
+    const prismaSchema = path.resolve(`src/database/schema.prisma`);
+    const schemaExists = await fs.pathExists(prismaSchema)
+    let modelSchema: Record<string, string> | undefined = undefined;
+    if (schemaExists) {
+        const jsonSchema = await parsePrismaSchema(prismaSchema);
+        const key = toPascalCase(moduleName);
+        if (jsonSchema[key]) {
+            modelSchema = jsonSchema[key];
+        }
+    }
 
     // Loop through each template category configuration
     for (const config of templatesConfig) {
@@ -292,7 +280,7 @@ async function generateModule(moduleName: string) {
 
             if (renderer) {
                 // Call the renderer with the template content and module name
-                rendered = renderer(content, moduleName);
+                rendered = renderer(content, moduleName, modelSchema);
             } else {
                 console.warn(`Warning: No specific template generation function found for verb: '${verb}'. Falling back to raw content.`);
                 rendered = content; // Fallback to raw content if no specific renderer
@@ -381,6 +369,12 @@ async function initServer() {
         for (const file of files) {
             const templateFile = path.join('init', folder, file.split('/').pop()!);
             const targetFile = path.join(targetSubDir, file.split('/').pop()!.replace('.tpl', ''));
+
+            const exists = await fs.pathExists(targetFile);
+            if (exists) {
+                continue
+            }
+
             await copyTemplate(templateFile, targetFile);
         }
     }
@@ -390,35 +384,41 @@ async function initServer() {
 
 
 async function main() {
-    const { command } = await inquirer.prompt([
-        {
-            name: 'command',
-            type: 'list',
-            message: 'What do you wanna do ?',
-            choices: [
-                "init server",
-                "add module",
-            ]
-        },
-    ]);
+    let main = true
+    while (main) {
+        const { command } = await inquirer.prompt([
+            {
+                name: 'command',
+                type: 'list',
+                message: 'What do you wanna do ?',
+                choices: [
+                    "init server",
+                    "add module",
+                    "exit",
+                ]
+            },
+        ]);
 
-    switch (command) {
-        case "add module":
-            const { moduleName } = await inquirer.prompt([
-                {
-                    name: 'moduleName',
-                    type: 'input',
-                    message: 'Enter the module name:',
-                },
-            ]);
-            await generateModule(moduleName);
-            break;
-
-        case "init server":
-            await initServer();
-            break;
-        default:
-            break;
+        switch (command) {
+            case "add module":
+                const { moduleName } = await inquirer.prompt([
+                    {
+                        name: 'moduleName',
+                        type: 'input',
+                        message: 'Enter the module name:',
+                    },
+                ]);
+                await generateModule(moduleName);
+                break;
+            case "init server":
+                await initServer();
+                break;
+            case "exit":
+                main = false
+                break;
+            default:
+                break;
+        }
     }
 }
 
