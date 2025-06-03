@@ -1,5 +1,6 @@
 import { {{Model}} } from "@prisma/client";
 import prisma from "../../database";
+import AppError from "../../error/AppError";
 
 export type List{{Model}}Request = {
   pageNumber: string;
@@ -14,7 +15,11 @@ interface Response {
 const List{{Model}}sService = async (data: List{{Model}}Request): Promise<Response> => {
   let whereCondition: any = {};
 
-  for (const key in data) {
+  const keysToQuery: (
+    keyof Partial<{{Model}}>
+  )[] = Object.keys(data) as (keyof Partial<{{Model}}>)[];
+
+  for (const key of keysToQuery) {
     if (data[key] !== undefined) {
       whereCondition[key] = data[key];
     }

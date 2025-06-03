@@ -194,10 +194,7 @@ async function generateModule(moduleName: string) {
                 return match ? 'controller' : null;
             },
             // Renderer for controllers
-            getRenderer: (verb: string) => {
-                if (verb === 'controller') return renderTemplate;
-                return null;
-            }
+            getRenderer: (verb: string) => renderTemplate
         },
         {
             category: 'routes',
@@ -213,10 +210,23 @@ async function generateModule(moduleName: string) {
                 return match ? 'route' : null;
             },
             // Renderer for routes
-            getRenderer: (verb: string) => {
-                if (verb === 'route') return renderTemplate;
-                return null;
-            }
+            getRenderer: (verb: string) => renderTemplate
+        },
+        {
+            category: 'events',
+            templates: [
+                'events.ts.tpl', // New routes template
+            ],
+            // Routes are typically in a common 'src/routes' directory
+            getTargetDir: (modName: string) => path.resolve(`src/events`),
+            getOutputFileName: (modName: string, verb: string) => `${toPascalCase(modName)}Event.ts`,
+            // For routes, we can use 'routes' as the verb/type
+            getVerb: (templatePath: string) => {
+                const match = templatePath.match(/events\.ts\.tpl$/);
+                return match ? 'route' : null;
+            },
+            // Renderer for routes
+            getRenderer: (verb: string) => renderTemplate
         }
     ];
 
@@ -325,7 +335,8 @@ async function initServer() {
         ],
         "utils": [
             "/init/utils/logger.ts.tpl",
-            "/init/utils/refreshtoken.ts.tpl"
+            "/init/utils/refreshtoken.ts.tpl",
+            "/init/utils/events.ts.tpl"
         ],
         "": [
             "/init/app.ts.tpl",

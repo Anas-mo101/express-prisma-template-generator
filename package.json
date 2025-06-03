@@ -4,7 +4,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "build": "tsc && cp -r src/templates/ dist/"
+    "build": "tsc && cp -r src/templates/ dist/",
+    "win-build": "tsc && copy -r ./src/templates/ dist/"
   },
   "keywords": [],
   "author": "",

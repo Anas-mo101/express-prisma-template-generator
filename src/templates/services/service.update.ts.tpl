@@ -1,8 +1,10 @@
 import AppError from "../../error/AppError";
 import prisma from "../../database";
+import {{Model}}Emitter from "../../events/{{Model}}Event";
+import { {{Model}}, Prisma } from "@prisma/client";
 
 interface Request {
-  data: Partial<{{Model}}>;
+  data: Prisma.{{Model}}UpdateInput;
   id: number;
 }
 
@@ -12,7 +14,11 @@ const Update{{Model}}Service = async ({
 }: Request): Promise<{{Model}}> => {
   const toUpdate: any = {};
 
-  for (const key in data) {
+  const keysToUpdate: (
+    keyof Prisma.{{Model}}UpdateInput
+  )[] = Object.keys(data) as (keyof Prisma.{{Model}}UpdateInput)[];
+
+  for (const key of keysToUpdate) {
     if (data[key] !== undefined) {
       toUpdate[key] = data[key];
     }
@@ -28,6 +34,8 @@ const Update{{Model}}Service = async ({
   }).catch((err: any) => {
     throw new AppError("{{MODEL}}_Update_ERROR", 400);
   });
+
+  {{Model}}Emitter.emit("{{model}}_updated", id, data);
 
   return {{model}};
 };
